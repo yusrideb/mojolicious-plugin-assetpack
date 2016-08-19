@@ -1,4 +1,4 @@
 Revision history for perl distribution Mojolicious-Plugin-AssetPack-Backcompat
 
-1.20 Not Released
+1.20 2016-08-19T15:14:01+0200
  - Split Backcompat code from Mojolicious-Plugin-AssetPack
