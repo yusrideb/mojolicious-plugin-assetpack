@@ -19,6 +19,8 @@ WriteMakefile(
 }
 ,
   PREREQ_PM => {
+  'CSS::Minifier::XS' => '0.09',
+  'JavaScript::Minifier::XS' => '0.11',
   'Mojolicious::Plugin::AssetPack' => '0.20'
 }
 ,
