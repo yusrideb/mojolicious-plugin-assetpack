@@ -16,6 +16,8 @@ sub t_old {
   my $static = delete $args->{static} || ['public'];
   my $t = Test::Mojo->new(Mojolicious->new(secrets => ['s3cret']));
 
+  plan skip_all => 'ASSETPACK_RUN_TESTS=1' unless $ENV{ASSETPACK_RUN_TESTS};
+
   $args->{log} ||= [];
   $_ = Cwd::abs_path(File::Spec->catdir('t', $_)) for @$static;
 

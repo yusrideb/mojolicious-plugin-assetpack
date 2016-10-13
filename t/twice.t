@@ -3,6 +3,8 @@ use Test::Mojo;
 use Test::More;
 use Mojolicious::Lite;
 
+plan skip_all => 'ASSETPACK_RUN_TESTS=1' unless $ENV{ASSETPACK_RUN_TESTS};
+
 plugin 'AssetPack';
 
 my $t         = Test::Mojo->new;

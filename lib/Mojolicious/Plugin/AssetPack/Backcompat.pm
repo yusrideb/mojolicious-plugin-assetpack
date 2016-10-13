@@ -13,7 +13,7 @@ use constant NO_CACHE => $ENV{MOJO_ASSETPACK_NO_CACHE} || 0;
 
 my $MONIKER_RE = qr{^(.+)\.(\w+)$};
 
-our $VERSION = '1.21';
+our $VERSION = '1.22';
 
 has base_url => '/packed/';
 has preprocessors => sub { Mojolicious::Plugin::AssetPack::Preprocessors->new };

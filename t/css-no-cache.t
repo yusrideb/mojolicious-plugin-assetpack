@@ -46,7 +46,7 @@ my $file;
   $t->get_ok($files[-1])->status_is(200)->content_like(qr{\#616161});
 }
 
-END { unlink $file }
+END { unlink $file if $file }
 
 done_testing;
 

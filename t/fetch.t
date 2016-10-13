@@ -2,6 +2,8 @@ use Mojo::Base -strict;
 use Test::Mojo;
 use Test::More;
 
+plan skip_all => 'ASSETPACK_RUN_TESTS=1' unless $ENV{ASSETPACK_RUN_TESTS};
+
 use Mojolicious::Lite;
 plugin 'AssetPack';
 get '/fetch-example.css' => {text => 'body{background:#fff}'};
