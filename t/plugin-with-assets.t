@@ -2,6 +2,8 @@ use t::Helper;
 use File::Find ();
 use File::Spec::Functions qw( catdir catfile );
 
+plan skip_all => 'ASSETPACK_RUN_TESTS=1' unless $ENV{ASSETPACK_RUN_TESTS};
+
 my $source_dir   = catdir qw( t read-only-with-source-assets );
 my $existing_dir = catdir qw( t read-only-with-existing-assets );
 my $plugin_name  = make_plugin();
