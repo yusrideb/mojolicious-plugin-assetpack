@@ -1,3 +1,4 @@
+use lib '.';
 use t::Helper;
 
 # Looks like JavaScript-Minifier-XS returns undef if no javascript was found:

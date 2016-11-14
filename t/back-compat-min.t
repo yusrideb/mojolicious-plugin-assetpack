@@ -1,3 +1,4 @@
+use lib '.';
 use t::Helper;
 
 my $src = File::Spec->catfile(qw( t public css bootstrap-0cbacb97f7b3f70fb6d39926d48dba68.css ));

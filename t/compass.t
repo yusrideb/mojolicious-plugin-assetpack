@@ -1,4 +1,5 @@
 BEGIN { $ENV{ENABLE_LIBSASS_BINDINGS} = 0 }
+use lib '.';
 use t::Helper;
 use File::Which;
 

@@ -1,4 +1,5 @@
 BEGIN { $ENV{MOJO_ASSETPACK_NO_CACHE} = 1 }
+use lib '.';
 use t::Helper;
 use Mojo::Util 'spurt';
 
