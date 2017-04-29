@@ -113,11 +113,11 @@ is(Mojolicious::Plugin::AssetPack::Preprocessor::Scss->_url, 'http://sass-lang.c
 done_testing;
 
 sub modify {
-  use Mojo::Util qw( slurp spurt );
+  use Mojo::File 'path';
   my ($scss_file, $cb) = @_;
-  local $_ = slurp $scss_file;
+  local $_ = path($scss_file)->slurp;
   $cb->();
-  spurt $_ => $scss_file;
+  path($scss_file)->spurt($_);
 }
 
 __DATA__

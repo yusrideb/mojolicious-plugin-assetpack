@@ -1,6 +1,8 @@
 package Mojolicious::Plugin::AssetPack::Preprocessor::Scss;
 use Mojo::Base 'Mojolicious::Plugin::AssetPack::Preprocessor';
-use Mojo::Util qw(slurp md5_sum);
+
+use Mojo::File;
+use Mojo::Util 'md5_sum';
 use File::Basename ();
 use File::Spec::Functions 'catfile';
 use File::Which ();
@@ -29,7 +31,7 @@ sub checksum {
     my $path = $self->_import_path(\@include_paths, split('/', $2), $ext) or next;
     warn "[AssetPack] Found \@import $path\n" if DEBUG == 2;
     $self->{checked}{$path}++ and next;
-    push @checksum, $self->checksum(\slurp($path), $path);
+    push @checksum, $self->checksum(\Mojo::File->new($path)->slurp, $path);
   }
 
   return Mojo::Util::md5_sum(join '', @checksum);

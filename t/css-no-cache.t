@@ -1,7 +1,7 @@
 BEGIN { $ENV{MOJO_ASSETPACK_NO_CACHE} = 1 }
 use lib '.';
 use t::Helper;
-use Mojo::Util 'spurt';
+use Mojo::File 'path';
 
 my $file;
 
@@ -13,12 +13,12 @@ my $file;
 
   $t->app->asset('no-cache.css' => '/css/no-cache.css', '/css/b.css');
 
-  spurt('body { color: #424242; }', $file);
+  path($file)->spurt('body { color: #424242; }');
   $t->get_ok('/test1')->status_is(200)->content_like(qr{\#424242});
   push @files, $t->tx->res->dom->at('link')->{href};
   $t->get_ok($files[-1])->status_is(200)->content_like(qr{\#424242});
 
-  spurt('body { color: #606060; }', $file);
+  path($file)->spurt('body { color: #606060; }');
   $t->get_ok('/test1')->status_is(200)->content_like(qr{\#606060});
   push @files, $t->tx->res->dom->at('link')->{href};
   $t->get_ok($files[-1])->status_is(200)->header_is('Content-Type', 'text/css')->content_like(qr{\#606060});
@@ -32,12 +32,12 @@ my $file;
 
   $t->app->asset('no-cache.css' => '/css/no-cache.css', '/css/b.css');
 
-  spurt('body { color: #242424; }', $file);
+  path($file)->spurt('body { color: #242424; }');
   $t->get_ok('/test1')->status_is(200)->content_like(qr{\#242424});
   push @files, $t->tx->res->dom->at('link')->{href};
   $t->get_ok($files[-1])->status_is(200)->content_like(qr{\#242424});
 
-  spurt('body { color: #616161; }', $file);
+  path($file)->spurt('body { color: #616161; }');
   $t->get_ok('/test1')->status_is(200)->content_like(qr{\#616161});
   my $style = $t->tx->res->dom->at('style');
   ok $style, 'got style tag';

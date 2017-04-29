@@ -1,5 +1,8 @@
 Revision history for perl distribution Mojolicious-Plugin-AssetPack-Backcompat
 
+1.24 Not Released
+ - Stop using deprecated "slurp" and "spurt" #1
+
 1.23 2016-11-13T17:53:51+0100
  - Skipping more tests
 
