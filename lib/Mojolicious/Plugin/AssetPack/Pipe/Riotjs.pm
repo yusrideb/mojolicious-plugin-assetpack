@@ -14,22 +14,16 @@ has _riotjs => sub {
 
 sub process {
   my ($self, $assets) = @_;
-  my $store = $self->assetpack->store;
-  my $file;
 
   $assets->each(
     sub {
       my ($asset, $index) = @_;
-      my $attrs = $asset->TO_JSON;
-      $attrs->{key}    = 'riot';
-      $attrs->{format} = 'js';
-      return unless $asset->format eq 'tag';
-      return $asset->content($file)->FROM_JSON($attrs) if $file = $store->load($attrs);
+      return if $asset->processed and $asset->format ne 'tag';
       local $CWD = $self->app->home->to_string;
       local $ENV{NODE_PATH} = $self->app->home->rel_file('node_modules');
       $self->run([qw(riot --version)], undef, \undef) unless $self->{installed}++;
       $self->run($self->_riotjs, \$asset->content, \my $js);
-      $asset->content($store->save(\$js, $attrs))->FROM_JSON($attrs);
+      $asset->content($js)->format('js');
     }
   );
 }

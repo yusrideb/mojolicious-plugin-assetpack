@@ -8,13 +8,11 @@ plan skip_all => 'cpanm JavaScript::Minifier::XS'
   unless eval 'require JavaScript::Minifier::XS;1';
 
 my $t = t::Helper->t(pipes => [qw(JavaScript Combine)]);
-my $checksum = checksum join ':',
-  map { checksum(data_section __PACKAGE__, $_) } 'd/one.js', 'd/two.js';
 
 $t->app->asset->process('app.js' => ('d/one.js', 'd/two.js'));
 
 $t->get_ok('/')->status_is(200)
-  ->element_exists(qq(script[src="/asset/$checksum/app.js"]));
+  ->element_exists(qq(script[src="/asset/0c712d6281/app.js"]));
 
 $t->get_ok($t->tx->res->dom->at('script')->{src})->status_is(200)
   ->header_is('Content-Type', 'application/javascript')

@@ -15,24 +15,18 @@ has _typescript => sub {
 
 sub process {
   my ($self, $assets) = @_;
-  my $store = $self->assetpack->store;
-  my $file;
 
   $assets->each(
     sub {
       my ($asset, $index) = @_;
-      my $attrs = $asset->TO_JSON;
-      $attrs->{key}    = 'ts';
-      $attrs->{format} = 'js';
-      return unless $asset->format eq 'ts';
-      return $asset->content($file)->FROM_JSON($attrs) if $file = $store->load($attrs);
+      return if $asset->processed or $asset->format ne 'ts';
 
       $self->_install_typescript unless $self->{installed}++;
       local $CWD = $self->app->home->to_string;
       local $ENV{NODE_PATH} = $self->app->home->rel_file('node_modules');
 
       $self->run($self->_typescript, \$asset->content, \my $js);
-      $asset->content($store->save(\$js, $attrs))->FROM_JSON($attrs);
+      $asset->content($js)->format('js');
     }
   );
 }

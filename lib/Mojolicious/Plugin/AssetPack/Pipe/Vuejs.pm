@@ -3,12 +3,11 @@ use Mojo::Base 'Mojolicious::Plugin::AssetPack::Pipe';
 
 sub process {
   my ($self, $assets) = @_;
-  my $store = $self->assetpack->store;
 
   return $assets->each(
     sub {
       my ($asset, $index) = @_;
-      return unless $asset->format eq 'vue';
+      return if $asset->processed or $asset->format ne 'vue';
 
       my $vue = sprintf 'Vue.component("%s", {', $asset->name;
       my ($script, $template);

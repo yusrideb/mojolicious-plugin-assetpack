@@ -35,23 +35,18 @@ sub process {
     sub {
       my ($asset, $index) = @_;
 
-      return if $asset->format !~ $FORMAT_RE;
-      my ($attrs, $content) = ($asset->TO_JSON, $asset->content);
+      return if $asset->processed or $asset->format !~ $FORMAT_RE;
+      my $content = $asset->content;
       local $self->{checksum_for_file} = {};
       local $opts{include_paths}[0] = _include_path($asset);
-      $attrs->{minified} = $self->assetpack->minify;
-      $attrs->{key}      = sprintf 'sass%s', $attrs->{minified} ? '-min' : '';
-      $attrs->{format}   = 'css';
-      $attrs->{checksum} = $self->_checksum(\$content, $asset, $opts{include_paths});
+      $asset->checksum($self->_checksum(\$content, $asset, $opts{include_paths}));
 
-      return $asset->content($file)->FROM_JSON($attrs) if $file = $store->load($attrs);
       return if $asset->isa('Mojolicious::Plugin::AssetPack::Asset::Null');
       $opts{include_paths}[0] = $asset->path ? $asset->path->dirname : undef;
       $opts{include_paths} = [grep {$_} @{$opts{include_paths}}];
-      diag 'Process "%s" with checksum %s.', $asset->url, $attrs->{checksum} if DEBUG;
 
       if ($self->{has_module} //= load_module 'CSS::Sass') {
-        $opts{output_style} = _output_style($attrs->{minified});
+        $opts{output_style} = _output_style($self->assetpack->minify);
         $content = CSS::Sass::sass2scss($content) if $asset->format eq 'sass';
         my ($css, $err, $stats) = CSS::Sass::sass_compile($content, %opts);
         if ($err) {
@@ -61,13 +56,13 @@ sub process {
         $css = Mojo::Util::encode('UTF-8', $css);
         $self->_add_source_map_asset($asset, \$css, $stats)
           if $stats->{source_map_string};
-        $asset->content($store->save(\$css, $attrs))->FROM_JSON($attrs);
+        $asset->content($css);
       }
       else {
         my @args = (qw(sass -s), map { ('-I', $_) } @{$opts{include_paths}});
         push @args, '--scss' if $asset->format eq 'scss';
         $self->run(\@args, \$content, \my $css, undef);
-        $asset->content($store->save(\$css, $attrs))->FROM_JSON($attrs);
+        $asset->content($css)->format('css');
       }
     }
   );

@@ -29,7 +29,7 @@ ok !$t->app->asset->ua->proxy->http, 'no http proxy';
 
 $t = Test::Mojo->new(Mojolicious->new);
 $t->app->plugin(AssetPack => {pipes => ['Css']});
-is @{$t->app->asset->{pipes}}, 1, 'only one pipe';
+is @{$t->app->asset->{pipes}}, 2, 'number of pipes';
 
 eval { $t->app->asset->process('test.css' => '/file/not/found.css') };
 like $@, qr{Could not find input asset}, 'file not found';

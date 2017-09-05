@@ -27,8 +27,6 @@ sub run {
   };
 }
 
-sub process { Carp::confess('Method "process" not implemented by subclass') }
-
 sub _find_app {
   my ($self, $apps, $path) = @_;
   return $path if $path and path($path)->is_abs;
@@ -130,7 +128,7 @@ Mojolicious::Plugin::AssetPack::Pipe - Base class for a pipe
         # Process asset content
         diag q(Replace white with red in "%s".), $asset->url if DEBUG;
         $content =~ s!white!red!g;
-        $asset->content($store->save(\$content, $attr))->minified(1);
+        $asset->content($content);
       }
     );
   }

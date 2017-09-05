@@ -7,6 +7,7 @@ use Mojo::File;
 use Mojolicious::Plugin::AssetPack::Util qw(diag has_ro DEBUG);
 
 has checksum => sub { Mojolicious::Plugin::AssetPack::Util::checksum(shift->content) };
+
 has format => sub {
   my $self = shift;
   my $name
@@ -18,6 +19,7 @@ has format => sub {
 };
 
 has minified => sub { shift->url =~ /\bmin\b/ ? 1 : 0 };
+has processed => 0;
 
 has _asset => sub {
   my $self = shift;
@@ -66,13 +68,14 @@ sub asset {
 sub clone {
   my $self  = shift;
   my $clone = (ref $self)->new(%{$self});
-  delete $clone->{$_} for qw(checksum minified);
+  delete $clone->{$_} for qw(checksum processed);
   return $clone;
 }
 
 sub content {
   my $self = shift;
   return $self->_asset->slurp unless @_;
+  delete $self->{checksum};
   return $self->_asset($_[0]->_asset) if UNIVERSAL::isa($_[0], __PACKAGE__);
   return $self->_asset($_[0])         if UNIVERSAL::isa($_[0], 'Mojo::Asset');
   return $self->_asset(Mojo::Asset::Memory->new->add_chunk($_[0]));
@@ -81,18 +84,13 @@ sub content {
 sub path {
   $_[0]->_asset->isa('Mojo::Asset::File') ? Mojo::File->new($_[0]->_asset->path) : undef;
 }
+
 sub size { $_[0]->_asset->size }
 
 sub url_for { $_[1]->url_for(assetpack => $_[0]->TO_JSON); }
 
-sub FROM_JSON {
-  my ($self, $attrs) = @_;
-  $self->$_($attrs->{$_}) for grep { defined $attrs->{$_} } qw(checksum format minified);
-  $self;
-}
-
 sub TO_JSON {
-  return {map { ($_ => $_[0]->$_) } qw(checksum format minified name url)};
+  return {map { ($_ => $_[0]->$_) } qw(checksum format processed name url)};
 }
 
 1;
@@ -135,6 +133,14 @@ The format of L</content>. Defaults to the extension of L</url> or empty string.
 
 Will be set to true if either L</url> contains "min" or if a pipe has
 minified L</content>.
+
+=head2 processed
+
+  $bool = $self->processed;
+  $self = $self->processed($bool);
+
+Will be set to true if if the input files and configuration matches an output
+file.
 
 =head2 name
 

@@ -4,24 +4,18 @@ use Mojolicious::Plugin::AssetPack::Util qw(diag $CWD DEBUG);
 
 sub process {
   my ($self, $assets) = @_;
-  my $store = $self->assetpack->store;
-  my $file;
 
   $assets->each(
     sub {
       my ($asset, $index) = @_;
-      return if $asset->format ne 'less';
-      my $attrs = $asset->TO_JSON;
-      @$attrs{qw(format key)} = qw(css less);
-      return $asset->content($file)->FROM_JSON($attrs) if $file = $store->load($attrs);
-      diag 'Process "%s" with checksum %s.', $asset->url, $attrs->{checksum} if DEBUG;
+      return if $asset->processed or $asset->format ne 'less';
       my @args = qw(lessc --no-color);
       my $file
         = $asset->path ? $asset : Mojo::Asset::File->new->add_chunk($asset->content);
       push @args, '--include-path=' . $asset->path->dirname if $asset->path;
       push @args, $file->path;
       $self->run(\@args, undef, \my $css);
-      $asset->content($store->save(\$css, $attrs))->FROM_JSON($attrs);
+      $asset->content($css)->format('css');
     }
   );
 }

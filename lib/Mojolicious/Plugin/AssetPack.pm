@@ -16,6 +16,7 @@ $TAG_TEMPLATE{$_} = [qw(img src)]    for qw(gif jpg jpeg png svg);
 $TAG_TEMPLATE{$_} = [qw(source src)] for qw(mp3 mp4 ogg ogv webm);
 
 has minify => sub { shift->_app->mode eq 'development' ? 0 : 1 };
+has pipes => sub { +[] };
 
 has route => sub {
   shift->_app->routes->route('/asset/:checksum/*name')->via(qw(HEAD GET))
@@ -131,16 +132,18 @@ sub _correct_mode {
 sub _pipes {
   my ($self, $names) = @_;
 
-  $self->{pipes} = [
-    map {
-      my $class = load_module /::/ ? $_ : "Mojolicious::Plugin::AssetPack::Pipe::$_";
-      diag 'Loading pipe "%s".', $class if DEBUG;
-      die qq(Unable to load "$_": $@) unless $class;
-      my $pipe = $class->new(assetpack => $self);
-      Scalar::Util::weaken($pipe->{assetpack});
-      $pipe;
-    } @$names
-  ];
+  $self->pipes(
+    [
+      map {
+        my $class = load_module /::/ ? $_ : "Mojolicious::Plugin::AssetPack::Pipe::$_";
+        diag 'Loading pipe "%s".', $class if DEBUG;
+        die qq(Unable to load "$_": $@) unless $class;
+        my $pipe = $class->new(assetpack => $self);
+        Scalar::Util::weaken($pipe->{assetpack});
+        $pipe;
+      } (@$names, 'Store')
+    ]
+  );
 }
 
 sub _process {
@@ -157,8 +160,10 @@ sub _process {
     $asset->checksum;
   }
 
+  diag 'minify=%s', $self->minify ? 'yes' : 'no' if DEBUG;
+
   for my $method (qw(before_process process after_process)) {
-    for my $pipe (@{$self->{pipes}}) {
+    for my $pipe (@{$self->pipes}) {
       next unless $pipe->can($method);
       local $pipe->{topic} = $topic;
       diag '%s->%s("%s")', ref $pipe, $method, $topic if DEBUG;
