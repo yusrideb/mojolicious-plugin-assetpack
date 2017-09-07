@@ -5,14 +5,15 @@ plan skip_all => 'cpanm CSS::Sass' unless eval 'use CSS::Sass 3.3.0;1';
 my $t = t::Helper->t(pipes => [qw(Sass Css)]);
 $t->app->asset->process('app.css' => ('sass-one.sass', 'sass-two.scss'));
 $t->get_ok('/')->status_is(200)
-  ->element_exists(qq(link[href="/asset/5660087922/sass-one.css"]))
-  ->element_exists(qq(link[href="/asset/a2245cadf4/sass-two.css"]));
+  ->element_exists(qq(link[href="/asset/a62ca80c08/sass-one.css"]))
+  ->element_exists(qq(link[href="/asset/e912357d04/sass-two.css"]));
 
 my $html = $t->tx->res->dom;
 $t->get_ok($html->at('link:nth-of-child(1)')->{href})->status_is(200)
   ->content_like(qr{\.sass\W+color:\s+\#aaa}s);
 $t->get_ok($html->at('link:nth-of-child(2)')->{href})->status_is(200)
   ->content_like(qr{body\W+background:.*\.scss \.nested\W+color:\s+\#9\d9\d9\d}s);
+exit;
 
 $ENV{MOJO_MODE} = 'Test_minify_from_here';
 

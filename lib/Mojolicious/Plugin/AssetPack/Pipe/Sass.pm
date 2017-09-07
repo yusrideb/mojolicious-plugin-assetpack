@@ -15,6 +15,22 @@ $SOURCE_MAP_PLACEHOLDER =~ s!::!_!g;
 has functions => sub { +{} };
 has generate_source_map => sub { shift->app->mode eq 'development' ? 1 : 0 };
 
+sub before_process {
+  my ($self, $assets) = @_;
+  my %opts = (include_paths => [undef, @{$self->assetpack->store->paths}]);
+
+  return $assets->each(
+    sub {
+      my ($asset, $index) = @_;
+      return unless $asset->format =~ $FORMAT_RE;
+      local $opts{include_paths}[0] = _include_path($asset);
+      my $content = $asset->content;
+      my $checksum = $self->_checksum(\$asset->content, $asset, $opts{include_paths});
+      $asset->content($content)->checksum($checksum);
+    }
+  );
+}
+
 sub process {
   my ($self, $assets) = @_;
   my $store = $self->assetpack->store;
@@ -36,32 +52,29 @@ sub process {
       my ($asset, $index) = @_;
 
       return if $asset->processed or $asset->format !~ $FORMAT_RE;
-      my $content = $asset->content;
       local $self->{checksum_for_file} = {};
-      local $opts{include_paths}[0] = _include_path($asset);
-      $asset->checksum($self->_checksum(\$content, $asset, $opts{include_paths}));
-
-      return if $asset->isa('Mojolicious::Plugin::AssetPack::Asset::Null');
       $opts{include_paths}[0] = $asset->path ? $asset->path->dirname : undef;
       $opts{include_paths} = [grep {$_} @{$opts{include_paths}}];
 
       if ($self->{has_module} //= load_module 'CSS::Sass') {
+        my $content = $asset->content;
         $opts{output_style} = _output_style($self->assetpack->minify);
         $content = CSS::Sass::sass2scss($content) if $asset->format eq 'sass';
-        my ($css, $err, $stats) = CSS::Sass::sass_compile($content, %opts);
+        warn $content;
+        ($content, my $err, my $stats) = CSS::Sass::sass_compile($content, %opts);
         if ($err) {
           die sprintf '[Pipe::Sass] Could not compile "%s" with opts=%s: %s',
             $asset->url, dumper(\%opts), $err;
         }
-        $css = Mojo::Util::encode('UTF-8', $css);
-        $self->_add_source_map_asset($asset, \$css, $stats)
+        $content = Mojo::Util::encode('UTF-8', $content);
+        $self->_add_source_map_asset($asset, \$content, $stats)
           if $stats->{source_map_string};
-        $asset->content($css);
+        $asset->content($content);
       }
       else {
         my @args = (qw(sass -s), map { ('-I', $_) } @{$opts{include_paths}});
         push @args, '--scss' if $asset->format eq 'scss';
-        $self->run(\@args, \$content, \my $css, undef);
+        $self->run(\@args, \$asset->content, \my $css, undef);
         $asset->content($css)->format('css');
       }
     }
