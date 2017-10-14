@@ -22,6 +22,7 @@ $t->app->asset->process('app.css' => @assets);
 my $file = $t->app->asset->store->file('cache/x-026c9c3a29.min.css');
 isa_ok($file, 'Mojo::Asset::File');
 ok -e $file->path, 'cached file exists';
+my $app_css_1 = $t->app->asset->processed('app.css')->first->path;
 
 Mojo::Util::monkey_patch('CSS::Minifier::XS', minify => sub { die 'Not cached!' });
 $t = t::Helper->t(pipes => [qw(Css Combine)]);
@@ -41,6 +42,10 @@ $t->get_ok('/')->status_is(200)
 $t->get_ok($t->tx->res->dom->at('link')->{href})->status_is(200)
   ->header_is('Cache-Control', 'max-age=31536000')->header_is('Content-Type', 'text/css')
   ->content_like(qr/\.one\{color.*\.two\{color.*.skipped\s\{/s);
+
+my $app_css_2 = $t->app->asset->processed('app.css')->first->path;
+ok -s $app_css_2,  'second app.css file exists on disk';
+ok !-e $app_css_1, 'first app.css file was cleaned up';
 
 done_testing;
 

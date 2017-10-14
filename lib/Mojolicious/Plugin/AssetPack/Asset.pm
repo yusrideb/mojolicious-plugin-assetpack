@@ -7,6 +7,7 @@ use Mojo::File;
 use Mojolicious::Plugin::AssetPack::Util qw(diag has_ro DEBUG);
 
 has checksum => sub { Mojolicious::Plugin::AssetPack::Util::checksum(shift->content) };
+
 has format => sub {
   my $self = shift;
   my $name
@@ -18,13 +19,6 @@ has format => sub {
 };
 
 has minified => sub { shift->url =~ /\bmin\b/ ? 1 : 0 };
-
-has _asset => sub {
-  my $self = shift;
-  return $self->content(delete $self->{content})->_asset if $self->{content};
-  return Mojo::Asset::File->new(path => delete $self->{path}) if $self->{path};
-  return Mojo::Asset::Memory->new;
-};
 
 has_ro name => sub {
   my $self = shift;
@@ -48,6 +42,8 @@ has_ro name => sub {
 
 has_ro 'url';
 
+has _asset => sub { Mojo::Asset::Memory->new };
+
 sub asset {
   my $self  = shift;
   my $orig  = $self->_asset;
@@ -63,19 +59,19 @@ sub asset {
   return $clone;
 }
 
-sub clone {
-  my $self  = shift;
-  my $clone = (ref $self)->new(%{$self});
-  delete $clone->{$_} for qw(checksum minified);
-  return $clone;
-}
-
 sub content {
   my $self = shift;
   return $self->_asset->slurp unless @_;
   return $self->_asset($_[0]->_asset) if UNIVERSAL::isa($_[0], __PACKAGE__);
   return $self->_asset($_[0])         if UNIVERSAL::isa($_[0], 'Mojo::Asset');
-  return $self->_asset(Mojo::Asset::Memory->new->add_chunk($_[0]));
+  return $self->_asset(Mojo::Asset::File->new->add_chunk($_[0]));
+}
+
+sub new {
+  my $self = shift->SUPER::new(@_);
+  $self->path(delete $self->{path})       if defined $self->{path};
+  $self->content(delete $self->{content}) if defined $self->{content};
+  return $self;
 }
 
 sub path {
@@ -163,22 +159,21 @@ content or path from this object.
 
 This method is EXPERIMENTAL.
 
-=head2 clone
-
-  $clone = $self->clone;
-
-Makes a shallow clone of the object.
-
-This method is EXPERIMENTAL.
-
 =head2 content
 
   $bytes = $self->content;
   $self = $self->content($bytes);
-  $self = $self->content(Mojo::Asset::Memory->new);
+  $self = $self->content(Mojo::Asset::File->new);
 
 Used to get or set the content of this asset. The default will be built from
 passing L</url> to L<Mojolicious::Plugin::AssetPack::Store/file>.
+
+=head2 new
+
+  $self = $class->new(%attrs, path => ..);
+  $self = $class->new(%attrs, content => ..);
+
+Object constructor.
 
 =head2 path
 
